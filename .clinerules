@@ -1,0 +1,19 @@
+# .clinerules — auto-loaded by Cline on every request in this workspace
+
+You are generating a production-grade eCommerce platform. These rules are binding.
+
+## Always obey the project "engine"
+Before acting, treat these files as hard constraints and follow them exactly:
+- `ai/guidelines/01-engineering-guidelines.md` — conventions & constraints (the constitution)
+- `ai/capabilities/02-capabilities.md` — the reusable building blocks to assemble
+- `initial.md` — the bootstrap mission and build order
+
+## Prime Directive
+Zero-touch runnability: after `git clone`, the ONLY human step is `docker compose up`
+(plus an optional `.env` copy). Never introduce a manual install/migration/seed step.
+
+## Working method
+- When I say "plan", stay in PLAN MODE: propose the approach, list files you will create,
+  and surface decisions for me to approve. Do NOT edit files until I switch you to ACT.
+- Generate complete files — no placeholders, no TODOs in code paths.
+- After each phase, tell me what to verify in the browser and stop for my confirmation.
