@@ -18,7 +18,7 @@ import profileRoutes from './routes/profile.routes.js';
 // ── DB connection with retry ─────────────────────────────────────────────────
 // The server waits for MySQL to be ready (up to 30 s) before binding the port,
 // so no external wait-for-it script is needed (Prime Directive: zero-touch).
-async function waitForDb(maxAttempts = 30, intervalMs = 1000) {
+async function waitForDb(maxAttempts = 60, intervalMs = 2000) {
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
       const conn = await mysql.createConnection({

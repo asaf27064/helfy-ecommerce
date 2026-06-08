@@ -11,11 +11,14 @@ services:
       - mysql_data:/var/lib/mysql
       - ./db/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD:-rootpassword}"]
-      interval: 10s
+      # Use 127.0.0.1 (TCP) not localhost (socket): during first-boot MySQL runs a
+      # temporary socket-only server while loading init scripts. A TCP ping only
+      # succeeds once the real server is up, so "healthy" truly means ready.
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--password=${MYSQL_ROOT_PASSWORD:-rootpassword}"]
+      interval: 5s
       timeout: 5s
-      retries: 10
-      start_period: 30s
+      retries: 30
+      start_period: 60s
 
   server:
     build:
