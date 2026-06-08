@@ -134,7 +134,30 @@ Result: 8 tables, 25 products, 50 images, 1 demo user; insert order respects FKs
 lists match schema; demo hash matches the generated string exactly. Static review passed;
 runtime verified via `docker compose down -v && up` + `SHOW TABLES` / `SELECT COUNT(*)`.
 
-### Step 6 — Phase 3 (Backend) — model: Sonnet 4.6 (fresh task)
+### Step 6 — Phase 3 (Backend) — split across Cline (Sonnet 4.6) + Claude Code (fallback)
+Cline (Sonnet 4.6) generated the lower layers — `config/env`, `db/pool`, `utils` (ApiError,
+asyncHandler, jwt, password, logger), `middleware` (requireAuth, validate, errorHandler),
+and the five repositories — then the **provided token budget ran low** (≈140k of 200k
+context used, ~1M+ tokens spent). To protect the zero-touch guarantee and reserve budget
+for the frontend, I completed the remaining backend layer with **Claude Code (Opus 4.8)**:
+- Generated: all **services** (auth, product, category, cart, order, profile), all
+  **controllers**, all **routes** (with Zod validation schemas), wired `index.js`, and a
+  **clean rewrite of `orderRepo.js`** (the provider's PII filter had corrupted a couple of
+  identifiers in Cline's version).
+- This is a deliberate "AI-Gap" call — documented in README. Same `ai/` guidelines obeyed.
+
+**Verification (full API smoke test through nginx on :8080):**
+- demo login `demo@helfy.shop / Password123!` → JWT issued ✅ (proves the seeded bcrypt hash)
+- `GET /auth/me`, `GET /categories`, `GET /products/:id` ✅
+- cart add → checkout (subtotal 69.98, free shipping > $50, 8% tax 5.60, total 75.58) ✅
+- order history ✅; unauthenticated `GET /cart` → 401 standard error shape ✅
+- **AI-Gap #2 found & fixed:** `GET /products` (paginated list) → 500
+  `Incorrect arguments to mysqld_stmt_execute`. Cause: `pool.js` used `pool.execute()`
+  (prepared protocol) while `productRepo` used `LIMIT ? OFFSET ?` — prepared statements
+  reject bound LIMIT/OFFSET. Fix: switch the shared `query()` helper to `pool.query()`
+  (text protocol). Re-tested: search/category/price/pagination filters all pass.
+
+### Step 7 — Phase 4 (Frontend) — model: Sonnet 4.6
 - Prompt: <fill in>
 - Result: <fill in>
 

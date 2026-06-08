@@ -92,3 +92,13 @@ app starts with `docker compose up` and no `.env` file.
 | # | What broke | Fix applied | Why the AI missed it |
 |---|-----------|-------------|----------------------|
 | 1 | `docker compose up --build` failed with **EUSAGE: `npm ci` requires a `package-lock.json`** in both `server/Dockerfile` and `client/Dockerfile`. | Replaced `npm ci --omit=dev` with `npm install --omit=dev` (server) and `npm ci` with `npm install` (client build stage). | The AI generated `package.json` files in isolation without materialising a `package-lock.json` alongside them. The `COPY package-lock.json* ./` glob in the original Dockerfiles silently succeeded (a glob matching zero files is not an error), masking the missing lockfile until `npm ci` ran and hard-errored at runtime. The AI should have either committed a lockfile or unconditionally used `npm install`. |
+| 2 | `GET /api/products` (list with filters) returned **500 `Incorrect arguments to mysqld_stmt_execute`** (errno 1210). | Changed the shared `query()` helper in `server/src/db/pool.js` from `pool.execute(...)` to `pool.query(...)`. | A cross-file inconsistency the AI introduced: it wrote the shared DB helper to use `pool.execute()` (MySQL **prepared** protocol) while writing `productRepo.listProducts` with `LIMIT ? OFFSET ?` bound parameters. The prepared protocol rejects bound LIMIT/OFFSET values (it sends them as strings), so the statement only fails at runtime on the list endpoint — not on any of the non-paginated queries. Generating the two files independently, the AI never reconciled the protocol choice with the LIMIT placeholders. |
+
+> **Note on backend generation (Phase 3).** The Express service/controller/route layer, a
+> clean rewrite of `orderRepo.js`, and the `pool.js` fix above were generated with a
+> secondary AI tool (Claude Code) after the provided Cline token budget ran low during the
+> backend phase. This was a deliberate, time-boxed decision to protect the zero-touch
+> guarantee and keep budget for the frontend; the generated code follows the same
+> `ai/` guidelines and was verified end-to-end via the API smoke test (register, login,
+> catalog filters, cart, checkout, order history). See `docs/ai-interactions.md` for the
+> full tool/model breakdown.
