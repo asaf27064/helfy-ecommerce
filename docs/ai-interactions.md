@@ -157,17 +157,31 @@ for the frontend, I completed the remaining backend layer with **Claude Code (Op
   reject bound LIMIT/OFFSET. Fix: switch the shared `query()` helper to `pool.query()`
   (text protocol). Re-tested: search/category/price/pagination filters all pass.
 
-### Step 7 — Phase 4 (Frontend) — model: Sonnet 4.6
-- Prompt: <fill in>
-- Result: <fill in>
+### Step 7 — Phase 4 (Frontend) — Claude Code (Opus 4.8), fallback (Cline budget spent)
+With the Cline/OpenRouter budget effectively exhausted, the full React frontend was
+generated with Claude Code, reusing the premium Tailwind theme + component classes Cline
+had already defined in Phase 1 (`primary` emerald scale, deep-slate neutrals, `.btn-*`,
+`.card`, `.input`, `shadow-glow`).
 
-### Step 7 — Phase 4 (Frontend) — model: Sonnet 4.6
-- Prompt: <fill in>
-- Result: <fill in>
+Generated (~30 files):
+- `api/` axios client (JWT interceptor, error-shape normalization) + endpoint modules.
+- `context/` AuthContext (token hydrate via `/auth/me`), CartContext (server cart for
+  logged-in users, localStorage guest cart, **guest→server merge on login**), ToastContext.
+- `components/` UI kit (Button, Price, Skeleton, QuantityStepper, EmptyState) + layout
+  (Navbar with live cart badge + auth state, Footer, Container, PageTransition) +
+  ProductCard, ProtectedRoute.
+- `pages/` Home/Catalog (debounced search, category + sort filters, pagination, skeletons),
+  ProductDetail (gallery + stepper), Cart, multi-step Checkout (Shipping→Payment(mock)→
+  Review), Login, Register, Account (profile edit + order history), NotFound.
+- Router + providers wired in `App.jsx` / `main.jsx` with Framer Motion route transitions.
 
-### Step 8 — Phase 5 (Polish) — model: Sonnet 4.6
-- Prompt: <fill in>
-- Result: <fill in>
+**Verification:** Vite production build succeeded (no import/syntax errors, 357 KB JS).
+Full stack `docker compose up` → SPA `200` on :8080, SPA deep-link fallback `200`,
+`/api/products` returns 25 through the nginx proxy, all containers healthy.
+
+### Step 8 — Phase 5 (Polish / final) — pending visual QA in browser
+- Outstanding nice-to-haves (non-blocking): add `client/public/favicon.svg` (currently 404s),
+  move the Inter `@import` to a `<link>` in `index.html` so the premium font loads.
 
 ---
 
