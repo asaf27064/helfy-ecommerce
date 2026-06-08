@@ -111,11 +111,30 @@ _Budget checkpoint:_ ~1M tokens consumed through Phase 1 + planning. Adopted tok
 measures for Phases 2–5: a fresh Cline task per phase (drops accumulated context;
 `.clinerules` re-anchors cheaply), thinking OFF for Act-mode generation, minimal back-and-forth.
 
-### Step 5 — Phase 2 (Database) — model: Sonnet 4.6
-- Prompt: <fill in>
-- Result: <fill in>
+### Step 5 — Phase 2 (Database) — model: Sonnet 4.6 (fresh Cline task to reset context)
+Prompt (paraphrased): _"Phase 2 (Database) only: 01_schema.sql (8 tables — users,
+categories, products, product_images, addresses, cart_items, orders, order_items — InnoDB,
+utf8mb4, FKs, indexes, DECIMAL(10,2) money, snapshot columns on orders/order_items);
+02_seed.sql (6 H&W categories, 25 products, 50 Picsum images, demo user). Init scripts run
+on fresh volume only — remind me to `docker compose down -v`."_
 
-### Step 6 — Phase 3 (Backend) — model: Sonnet 4.6
+**Sub-step — verified bcrypt hash (avoided a likely AI-Gap):** rather than let the model
+hallucinate a bcrypt hash for the demo user (a common failure that breaks login), I had it
+generate a *real* one with the bcrypt library:
+`node --input-type=module -e 'import bcrypt from "bcrypt"; console.log(await bcrypt.hash("Password123!", 10));'`
+→ `$2b$10$X9n6QBZ...` then fed that exact string back to Cline to embed verbatim in the seed.
+- _Shell gotcha (host issue, not the AI):_ first attempt failed with `bash: !': event not
+  found` — bash history-expansion on the `!` in the password inside double quotes. Fixed by
+  flipping to single-quoted `-e` script.
+- _Tooling note:_ Cline split the demo email via `CONCAT('demo','@','helfy.shop')` and set
+  `first_name/last_name` via a follow-up `UPDATE` to dodge an over-eager PII redaction filter
+  on the provider — a quirk worth noting but harmless (resolves to `demo@helfy.shop`).
+
+Result: 8 tables, 25 products, 50 images, 1 demo user; insert order respects FKs; column
+lists match schema; demo hash matches the generated string exactly. Static review passed;
+runtime verified via `docker compose down -v && up` + `SHOW TABLES` / `SELECT COUNT(*)`.
+
+### Step 6 — Phase 3 (Backend) — model: Sonnet 4.6 (fresh task)
 - Prompt: <fill in>
 - Result: <fill in>
 
